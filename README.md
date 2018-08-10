@@ -79,3 +79,134 @@ pipeline
     // ...
   })
 ```
+
+### Bash Script
+
+```js
+const pipeline = new Pipelyne();
+
+pipeline
+  .stage('build')
+  .run('make')
+  .run('ls -Al');
+```
+
+### DockerHub Publish
+
+```js
+const pipeline = new Pipelyne();
+
+pipeline
+  .stage('build')
+  .docker.build({
+    dockerfile: './path/to/Dockerfile',
+    tag: 'my/image:1.0.0'
+  })
+  .stage('publish')
+  .dockerhub.setCredentials(process.env.DH_USERNAME, process.env.DH_PASSWORD)
+  .dockerhub.push('my/image:1.0.0')
+```
+
+### NPM Publish
+
+```js
+const pipeline = new Pipelyne();
+
+pipeline
+  .stage('publish')
+  .npm.setToken(process.env.NPM_TOKEN)
+  .npm.publish();
+```
+
+### Git Publish
+
+```js
+const pipeline = new Pipelyne();
+
+pipeline
+  .stage('publish')
+  .git.setUrl('https://github.com/my/repository')
+  .git.setCredentials(process.env.GH_USERNAME, process.env.GH_ACCESS_TOKEN)
+  .git.push(); // pushes to 'https://username:accessToken@github.com/my/repository'
+```
+
+### Global Timeout
+
+```js
+const pipeline = new Pipelyne();
+
+pipeline
+  .stage('test', {timeout: 5000})
+  // ...
+  .on('timeout', {
+    stage: 'test',
+  }, (pipelineDetails) => {
+    // ...
+  });
+```
+
+### Global Success
+
+```js
+const pipeline = new Pipelyne();
+
+pipeline
+  .stage('test')
+  // ...
+  .on('success', (pipelineDetails) => {
+    // ...
+  });
+```
+
+### Global Failure
+
+```js
+const pipeline = new Pipelyne();
+
+pipeline
+  .stage('test')
+  // ...
+  .on('failure', (pipelineDetails) => {
+    // ...
+  });
+```
+
+### Conditional Pipelines
+
+```js
+const pipeline = new Pipelyne();
+
+pipeline
+  .stage('test')
+  // ...
+  .stage('test', {
+    on: 'failure'
+  })
+  .npm('cleanup')
+  .stage('next stage...')
+  // ...
+```
+
+### Distributed Pipelines
+
+```js
+const pipeline = new Pipelyne();
+
+pipeline
+  .stage('test')
+  // ...
+  .on('failure', {stage: 'test', pipeline: './pipeline/test-fail'})
+```
+
+### Exporting Pipeline
+
+```js
+const pipeline = new Pipelyne();
+
+pipeline
+  .stage('...')
+  // ...
+
+const fs = require('fs');
+fs.writeFile('./.gitlab-ci.yml', pipeline.gitlab());
+```
