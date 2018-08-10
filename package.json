@@ -1,0 +1,33 @@
+{
+  "name": "pipelyne",
+  "version": "0.0.0",
+  "description": "A theoretical experiment to enable writing a CI/CD pipeline in good ol' JavaScript.",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "npx mocha --require ts-node/register \"./src/*.test.ts\" \"./src/**/*.test.ts\"",
+    "test:watch": "npm run test -- --watch --watch-extensions ts",
+    "check": "gts check",
+    "clean": "gts clean",
+    "compile": "tsc -p .",
+    "fix": "gts fix",
+    "prepare": "npm run compile"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/chai": "^4.1.4",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.5.7",
+    "chai": "^4.1.2",
+    "gts": "^0.8.0",
+    "mocha": "^5.2.0",
+    "npx": "^10.2.0",
+    "ts-node": "^7.0.0",
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.1"
+  },
+  "dependencies": {
+    "case": "^1.5.5"
+  }
+}

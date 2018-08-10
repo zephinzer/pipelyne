@@ -1,0 +1,27 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "declaration": true,
+    "lib": [
+      "dom",
+      "es5",
+      "es6"
+    ],
+    "sourceMap": true,
+    "target": "es5",
+    "types": [
+      "node",
+      "mocha",
+      "chai"
+    ],
+    "baseUrl": "./src",
+    "outDir": "./dist",
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/*.ts"
+  ],
+  "exclude": [
+    "**/node_modules"
+  ]
+}
