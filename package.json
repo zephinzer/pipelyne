@@ -1,16 +1,13 @@
 {
   "name": "pipelyne",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "A theoretical experiment to enable writing a CI/CD pipeline in good ol' JavaScript.",
-  "main": "dist/index.js",
+  "main": "dist/Pipelyne.js",
   "scripts": {
+    "build": "tsc -p ./tsconfig.build.json",
+    "lint": "tslint -c ./tslint.json -p ./tsconfig.json",
     "test": "npx mocha --require ts-node/register \"./src/*.test.ts\" \"./src/**/*.test.ts\"",
-    "test:watch": "npm run test -- --watch --watch-extensions ts",
-    "check": "gts check",
-    "clean": "gts clean",
-    "compile": "tsc -p .",
-    "fix": "gts fix",
-    "prepare": "npm run compile"
+    "test:watch": "npm run test -- --watch --watch-extensions ts"
   },
   "keywords": [],
   "author": "",
@@ -28,6 +25,7 @@
     "typescript": "^3.0.1"
   },
   "dependencies": {
-    "case": "^1.5.5"
+    "case": "^1.5.5",
+    "uuid": "^3.3.2"
   }
 }
