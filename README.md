@@ -9,8 +9,9 @@ A theoretical experiment to enable writing a CI/CD pipeline in good ol' JavaScri
 
 ## Scope
 
-- [ ] Consumer able to define pipeline stages
-- [ ] Consumer able to add manually input bash scripts
+- [x] Consumer able to define pipeline stages via `.stage()`
+- [x] Consumer able to define pipeline jobs within a stage via `.job()`
+- [x] Consumer able to add manually input bash scripts via `.run()`
 - [ ] Consumer able to run NPM scripts from `package.json`
 - [ ] Consumer able to publish to NPM
 - [ ] Consumer able to publish to DockerHub
