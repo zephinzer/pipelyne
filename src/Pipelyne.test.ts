@@ -99,14 +99,16 @@ describe('pipelyne', () => {
       // tslint:disable-next-line max-line-length
       it('throws an error if the path URI does not export a :pipelyne property', () => {
         expect(() =>
-          (new Pipelyne()).load('./')
+          (new Pipelyne())
+            .load('./test/resources/invalid-no-pipelyne-export.ts')
         ).to.throw(ReferenceError);
       });
 
       // tslint:disable-next-line max-line-length
       it('works if the path URI exists and exports a :pipelyne property', () => {
         expect(() => 
-          (new Pipelyne()).load('./test/resources/valid-external-pipeline.ts')
+          (new Pipelyne())
+            .load('./test/resources/valid-external-pipeline.ts')
         ).to.not.throw();
       });
     });
