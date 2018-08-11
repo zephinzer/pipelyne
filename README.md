@@ -97,6 +97,7 @@ A Pipelyne instance exposes the following methods:
 | `.run` | `:script`, `:commandOptions` | Defines a command that runs a shell script containing the script `:script`. See [CommandOptions](#commandoptions) for possible configurations |
 | `.load` | `:pathToPipelyne` OR `:Pipelyne` | Loads an externally defined Pipelyne. When the parameter is a String, the String is taken as the relative path URI to a file exporting a property `"pipelyne"` which should be a `Pipelyne` instance. When the parameter is a Pipelyne, the defined stages are automatically loaded into the current Pipelyne. |
 | `.toString` | `:format` | Exports the current Pipelyne as a String. See [PipelyneStringFormat](#pipelynestringformat) for possible formats. |
+| `.exportFor` | `:ciProvider` | Exports the current Pipelyne in the format of the specified `:ciProvider`. Currently only Travis is supported. See [our pipelyne.js](./pipelyne.js) for an example of doing this. The `pipelyne.js` is executed using the NPM script `pipeline`. [See the package.json](./package.json) |
 
 ## Configuration
 
