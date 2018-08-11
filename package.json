@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json",
     "lint": "tslint -c ./tslint.json -p ./tsconfig.json",
+    "pipeline": "node ./pipelyne.js",
     "test": "npx mocha --require ts-node/register \"./src/*.test.ts\" \"./src/**/*.test.ts\"",
     "test:watch": "npm run test -- --watch --watch-extensions ts"
   },
@@ -26,6 +27,7 @@
   },
   "dependencies": {
     "case": "^1.5.5",
+    "js-yaml": "^3.12.0",
     "uuid": "^3.3.2"
   }
 }

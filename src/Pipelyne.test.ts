@@ -75,10 +75,69 @@ describe('pipelyne', () => {
     });
   });
 
+  context('.load', () => {
+    let externalPipeline;
+
+    before(() => {
+      externalPipeline = new Pipelyne();
+      externalPipeline
+        .stage('external stage 1')
+        .job('external job 1')
+        .run('ls -A -l')
+        .stage('external stage 2')
+        .job('external job 2')
+        .run('pwd');
+    });
+
+    context('path URI provided', () => {
+      it('throws an error if the path URI does not exist', () => {
+        expect(() =>
+          (new Pipelyne()).load('./does-not-exist')
+        ).to.throw(TypeError);
+      });
+  
+      // tslint:disable-next-line max-line-length
+      it('throws an error if the path URI does not export a :pipelyne property', () => {
+        expect(() =>
+          (new Pipelyne()).load('./')
+        ).to.throw(ReferenceError);
+      });
+
+      // tslint:disable-next-line max-line-length
+      it('works if the path URI exists and exports a :pipelyne property', () => {
+        expect(() => 
+          (new Pipelyne()).load('./test/resources/valid-external-pipeline.ts')
+        ).to.not.throw();
+      });
+    });
+
+    context('a Pipelyne instance provided', () => {
+      let externalPipelyne;
+
+      before(() => {
+        externalPipelyne =
+          require('../test/resources/valid-external-pipeline').pipelyne;
+      });
+
+      it('adds the stages of the Pipelyne instance correctly', () => {
+        let currentPipelyne;
+        currentPipelyne = new Pipelyne();
+        currentPipelyne
+          .stage('local stage')
+          .job('local job');
+        expect(() => {
+          currentPipelyne.load(externalPipelyne);
+        }).to.not.throw();
+        expect(currentPipelyne.stages)
+          .to.have.length(externalPipelyne.stages.length + 1);
+      });
+    });
+  });
+
   context('.toString', () => {
-    it('works', () => {
-      const pipeline = new Pipelyne();
-      pipeline
+    it('can export as a JSON string', () => {
+      const pipelyne = new Pipelyne();
+      pipelyne
         .stage('one')
         .job('1a')
         .run('npm run lint')
@@ -89,7 +148,6 @@ describe('pipelyne', () => {
         .stage('three')
         .job('github')
         .run('git push');
-      console.info(pipeline.toString());
     });
   });
 });

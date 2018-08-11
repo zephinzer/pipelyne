@@ -9,9 +9,14 @@ A theoretical experiment to enable writing a CI/CD pipeline in good ol' JavaScri
 
 ## Scope
 
-- [x] Consumer able to define pipeline stages via `.stage()`
-- [x] Consumer able to define pipeline jobs within a stage via `.job()`
-- [x] Consumer able to add manually input bash scripts via `.run()`
+- [x] Consumer able to define pipeline stages via `.stage()` ([see usage](#defining-a-stage))
+- [x] Consumer able to define pipeline jobs within a stage via `.job()` ([see usage](#defining-a-job))
+- [x] Consumer able to add manually input bash scripts via `.run()` ([see usage](#defining-a-shell-command))
+- [x] Consumer able to load a Pipelyne by specifying a file path URI ([see usage](#loading-external-pipelyne-via-path))
+- [x] Consumer able to load a an externally defined Pipelyne ([see usage](#loading-external-pipelyne))
+- [ ] Consumer able to do file manipulation
+- [ ] Consumer able to set file ownership permissions
+- [ ] Consumer able to set file modification/execution permissions
 - [ ] Consumer able to run NPM scripts from `package.json`
 - [ ] Consumer able to publish to NPM
 - [ ] Consumer able to publish to DockerHub
@@ -19,195 +24,117 @@ A theoretical experiment to enable writing a CI/CD pipeline in good ol' JavaScri
 - [ ] Consumer able to export pipeline to GitLab format
 - [ ] Consumer able to export pipeline to Travis format
 
+## Installation
+
+```bash
+# with npm < 5
+npm i pipelyne --save;
+# or with npm > 5
+npm i pipelyne;
+# or with yarn
+yarn add pipelyne
+```
+
 ## Usage
 
-### Basic Pipeline
-```js
-const pipeline = new Pipelyn({
-  basePath: process.cwd(),
-});
-
-pipeline
-  // defines a lint stage for code quality checks
-  .stage('lint')
-  .npm('lint') // does `npm run lint`
-  // defines a build stage for creating distribution
-  .stage('build')
-  .npm('build')
-  .docker.build(
-    './provisioning/images/Dockerfile',
-    'me/myimage:latest'
-  )
-  // defines a test stage for unit tests
-  .stage('test')
-  .npm('test')
-  .npm('coverage')
-  // defines an optional integration test stage
-  .stage('integration', {
-    on: {
-      branch: /^master$/,
-    },
-  })
-  .git.clone('https://username:password@github.com/username/integration', './integration')
-  .chmod(500, './integration/integration-tests')
-  .run('./integration/integration-tests')
-  // defines a versioning stage
-  .stage('version')
-  .npm.bump('patch')
-  .git.tag(require('./package.json').version)
-  // defines a release stage
-  .stage('release')
-  .dockerhub.setCredentials(process.env.DH_USERNAME, process.env.DH_PASSWORD)
-  .dockerhub.push('me/myimage:latest')
-  .npm.setToken(process.env.NPM_TOKEN)
-  .npm.publish()
-  .git.setCredentials(process.env.GIT_USERNAME, process.env.GIT_ACCESS_TOKEN)
-  .git.setUrl(process.env.GIT_REPOSITORY_URL)
-  .git.push()
-  // defines a conditional 'test' stage failure pipeline
-  .on('failure', {
-    stage: 'test'
-  }, (pipelineDetails) => {
-    // ...
-  })
-  // defines a distributed 'integration' stage failure pipeline
-  .on('failure', {
-    stage: 'integration',
-    pipeline: './pipeline/integration-fail', // loads the pipeline at the path 
-  })
-  // defines a global failure notification job
-  .on('failure', (pipelineDetails) => {
-    // ...
-  })
-```
-
-### Bash Script
+### Importing & Initialisation
 
 ```js
+import {Pipelyne} from 'pipelyne';
+
 const pipeline = new Pipelyne();
-
-pipeline
-  .stage('build')
-  .run('make')
-  .run('ls -Al');
 ```
 
-### DockerHub Publish
+### Defining a Stage
 
 ```js
-const pipeline = new Pipelyne();
-
-pipeline
-  .stage('build')
-  .docker.build({
-    dockerfile: './path/to/Dockerfile',
-    tag: 'my/image:1.0.0'
-  })
-  .stage('publish')
-  .dockerhub.setCredentials(process.env.DH_USERNAME, process.env.DH_PASSWORD)
-  .dockerhub.push('my/image:1.0.0')
+pipeline.stage('stage name', {/* stage options */})
 ```
 
-### NPM Publish
+### Defining a Job
 
 ```js
-const pipeline = new Pipelyne();
-
 pipeline
-  .stage('publish')
-  .npm.setToken(process.env.NPM_TOKEN)
-  .npm.publish();
+  .stage('stage name', {/* stage options */})
+  .job('job name', {/* job options */})
 ```
 
-### Git Publish
+### Defining a Shell Command
 
 ```js
-const pipeline = new Pipelyne();
-
 pipeline
-  .stage('publish')
-  .git.setUrl('https://github.com/my/repository')
-  .git.setCredentials(process.env.GH_USERNAME, process.env.GH_ACCESS_TOKEN)
-  .git.push(); // pushes to 'https://username:accessToken@github.com/my/repository'
+  .stage('stage name', {/* stage options */})
+  .job('job name', {/* job options */})
+  .run('pwd') // runs the `pwd` command
 ```
 
-### Global Timeout
+### Loading external Pipelyne via path
 
 ```js
-const pipeline = new Pipelyne();
-
-pipeline
-  .stage('test', {timeout: 5000})
-  // ...
-  .on('timeout', {
-    stage: 'test',
-  }, (pipelineDetails) => {
-    // ...
-  });
+pipeline.load('./path/to/pipelyne.js');
 ```
 
-### Global Success
+> **NOTE**: The file at `./path/to/pipelyne.js` should export a `pipelyne` property.
+
+### Loading external Pipelyne
 
 ```js
-const pipeline = new Pipelyne();
-
-pipeline
-  .stage('test')
-  // ...
-  .on('success', (pipelineDetails) => {
-    // ...
-  });
+pipeline.load(require('./path/to/pipelyne.js').pipelyne);
 ```
 
-### Global Failure
+> **NOTE**: The loaded pipelyne should be an instance of Pipelyne.
 
-```js
-const pipeline = new Pipelyne();
+## API
 
-pipeline
-  .stage('test')
-  // ...
-  .on('failure', (pipelineDetails) => {
-    // ...
-  });
-```
+### `Pipelyne` Instance
 
-### Conditional Pipelines
+A Pipelyne instance exposes the following methods:
 
-```js
-const pipeline = new Pipelyne();
+| Method | Parameters | Description |
+| --- | --- | --- |
+| `.stage` | `:stageName`, `:stageOptions` | Defines a stage named `:stageName`. See [StageOptions](#stageoptions) for possible configurations |
+| `.job` | `:jobName`, `:jobOptions` | Defines a job named `:jobName` under the current stage. See [JobOptions](#joboptions) for possible configurations |
+| `.run` | `:script`, `:commandOptions` | Defines a command that runs a shell script containing the script `:script`. See [CommandOptions](#commandoptions) for possible configurations |
+| `.load` | `:pathToPipelyne` OR `:Pipelyne` | Loads an externally defined Pipelyne. When the parameter is a String, the String is taken as the relative path URI to a file exporting a property `"pipelyne"` which should be a `Pipelyne` instance. When the parameter is a Pipelyne, the defined stages are automatically loaded into the current Pipelyne. |
+| `.toString` | `:format` | Exports the current Pipelyne as a String. See [PipelyneStringFormat](#pipelynestringformat) for possible formats. |
 
-pipeline
-  .stage('test')
-  // ...
-  .stage('test', {
-    on: 'failure'
-  })
-  .npm('cleanup')
-  .stage('next stage...')
-  // ...
-```
+## Configuration
 
-### Distributed Pipelines
+### `RunnableOptions`
 
-```js
-const pipeline = new Pipelyne();
+| Key | Type | Description |
+| --- | --- | --- |
+| `allowFailure` | Boolean | Decides whether the Runnable is allowed to fail. |
+| `id` | String | Indiciates the ID of the Runnable. This should be automatically generated by the Runnable's constructor. |
 
-pipeline
-  .stage('test')
-  // ...
-  .on('failure', {stage: 'test', pipeline: './pipeline/test-fail'})
-```
+### `StageOptions`
+Stage options includes all the configurations in [`RunnableOptions`](#runnableoptions) as well as the following:
 
-### Exporting Pipeline
+| Key | Type | Description |
+| --- | --- | --- |
+| `name` | String | Name in normal text. The `id` of the Stage will be set to a `kebab-case`d version of the name. |
 
-```js
-const pipeline = new Pipelyne();
+### `JobOptions`
+Job options includes all the configurations in [`RunnableOptions`](#runnableoptions) as well as the following:
 
-pipeline
-  .stage('...')
-  // ...
+| Key | Type | Description |
+| --- | --- | --- |
+| `name` | String | Name in normal text. The `id` of the Job will be set to a `kebab-case`d version of the name. |
 
-const fs = require('fs');
-fs.writeFile('./.gitlab-ci.yml', pipeline.gitlab());
-```
+### `CommandOptions`
+Command options includes all the configurations in [`RunnableOptions`](#runnableoptions).
+
+No extra configurations are available.
+
+### `PipelyneStringFormat`
+This can be one of `"json"` or `"overview"`.
+
+## Contributing
+Fork, make changes, push, merge request with `master`, wait for tests to pass. You know the drill (:
+
+## License
+This package is licensed under the MIT license.
+
+See [the attached license file](./LICENSE) for details.
+
+# Cheers
