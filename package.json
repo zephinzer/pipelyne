@@ -1,6 +1,6 @@
 {
   "name": "pipelyne",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A theoretical experiment to enable writing a CI/CD pipeline in good ol' JavaScript.",
   "main": "dist/Pipelyne.js",
   "scripts": {
@@ -10,8 +10,27 @@
     "test": "npx mocha --require ts-node/register \"./src/*.test.ts\" \"./src/**/*.test.ts\"",
     "test:watch": "npm run test -- --watch --watch-extensions ts"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "continuous",
+    "integration",
+    "delivery",
+    "cicd",
+    "pipeline",
+    "javascript",
+    "js",
+    "devops"
+  ],
+  "author": "zephinzer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zephinzer/pipelyne.git"
+  },
+  "contributors": [
+    {
+      "name": "zephinzer",
+      "url": "https://github.com/zephinzer"
+    }
+  ],
   "license": "MIT",
   "devDependencies": {
     "@types/chai": "^4.1.4",

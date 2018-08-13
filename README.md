@@ -159,6 +159,7 @@ See [the attached license file](./LICENSE) for details.
 
 | Version | Description |
 | --- | --- |
+| 0.0.4 | Added test resources to `.npmignore` and added stuff to `package.json` |
 | 0.0.3 | Refactored exporter into its own module and enabled setting of `set +x` and `set -x` for allowing/disallowing failure in Travis exports |
 | 0.0.2 | Added undocumented exporter and external Pipelyne loading |
 | 0.0.1 | Initial release |
