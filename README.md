@@ -1,6 +1,8 @@
 # Pipelyne
 A theoretical experiment to enable writing a CI/CD pipeline in good ol' JavaScript.
 
+[![Build Status](https://travis-ci.org/zephinzer/pipelyne.svg?branch=master)](https://travis-ci.org/zephinzer/pipelyne) [![npm version](https://badge.fury.io/js/pipelyne.svg)](https://badge.fury.io/js/pipelyne)
+
 > "Atwood would be proud"
 
 ## Benefits
