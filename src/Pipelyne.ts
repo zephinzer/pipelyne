@@ -3,6 +3,7 @@ import {existsSync} from 'fs';
 import {JobOptions} from './Job';
 import {Stage, StageOptions} from './Stage';
 import {Runnable, RunnableProperties} from './lib/Runnable';
+import {getTravisPipeline} from './exporters/Travis';
 
 export type PipelyneCIProvider = 'travis';
 
@@ -163,27 +164,12 @@ export class Pipelyne extends Runnable<Pipelyne, PipelyneOptions> {
     return this;
   }
 
-  exportFor(continuousIntegrationProvider: PipelyneCIProvider): string {
-    const ciProviderScript = {};
-    let ciProviderScriptString = '';
-    switch (continuousIntegrationProvider) {
+  exportFor(ciProviderId: PipelyneCIProvider): string {
+    switch (ciProviderId) {
       case 'travis':
+        return getTravisPipeline(this);
       default:
-        ciProviderScript['language'] = 'node_js';
-        ciProviderScript['node_js'] = ['8'];
-        ciProviderScript['cache'] = {
-          directories: ['node_modules'],
-        };
-        ciProviderScript['script'] = [];
-        this.stages.forEach((stage) => {
-          stage.jobs.forEach((job) => {
-            job.commands.forEach((command) => {
-              ciProviderScript['script'].push(command.options.script);
-            });
-          });
-        });
-        ciProviderScriptString = require('js-yaml').safeDump(ciProviderScript);
+        throw new Error(`Unknown CI provider "${ciProviderId}".`);
     }
-    return ciProviderScriptString;
   }
 }

@@ -1,11 +1,15 @@
 # Pipelyne
 A theoretical experiment to enable writing a CI/CD pipeline in good ol' JavaScript.
 
+> "Atwood would be proud"
+
 ## Benefits
 
-1. Being able to run your pipeline locally
-2. Enables DevOps as a culture by lowering learning curve (no more `bash`)
-3. Removes system differences by using Node (no more *'it works on my machine!'*)
+1. Run your pipeline locally
+2. Involve developers by using their favourite language
+3. Run JavaScript instead of Bash
+4. Distribute your pipeline 
+5. Write once, export for multiple CI runners
 
 ## Scope
 
@@ -22,7 +26,7 @@ A theoretical experiment to enable writing a CI/CD pipeline in good ol' JavaScri
 - [ ] Consumer able to publish to DockerHub
 - [ ] Consumer able to do a Git push to repository
 - [ ] Consumer able to export pipeline to GitLab format
-- [ ] Consumer able to export pipeline to Travis format
+- [x] Consumer able to export pipeline to Travis format ([see usage](#exporting-pipelyne-for-travis))
 
 ## Installation
 
@@ -84,6 +88,19 @@ pipeline.load(require('./path/to/pipelyne.js').pipelyne);
 
 > **NOTE**: The loaded pipelyne should be an instance of Pipelyne.
 
+### Exporting Pipelyne for Travis
+
+```js
+const fs = require('fs');
+const path = require('path');
+// ...
+// export the pipeline into a file named .travis.yml
+fs.writeFileSync(
+  path.join(__dirname, './.travis.yml'),
+  pipeline.exportFor('travis')
+);
+```
+
 ## API
 
 ### `Pipelyne` Instance
@@ -137,5 +154,13 @@ Fork, make changes, push, merge request with `master`, wait for tests to pass. Y
 This package is licensed under the MIT license.
 
 See [the attached license file](./LICENSE) for details.
+
+## ChangeLog
+
+| Version | Description |
+| --- | --- |
+| 0.0.3 | Refactored exporter into its own module and enabled setting of `set +x` and `set -x` for allowing/disallowing failure in Travis exports |
+| 0.0.2 | Added undocumented exporter and external Pipelyne loading |
+| 0.0.1 | Initial release |
 
 # Cheers

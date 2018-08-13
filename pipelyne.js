@@ -17,4 +17,7 @@ pipelyne
   .execute()
 ;
 
-fs.writeFileSync(path.join(__dirname, './.travis.yml'), pipelyne.exportFor('travis'));
+fs.writeFileSync(
+  path.join(__dirname, './.travis.yml'),
+  pipelyne.exportFor('travis')
+);

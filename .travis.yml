@@ -5,6 +5,15 @@ cache:
   directories:
     - node_modules
 script:
+  - 'printf -- "STAGE: build"'
+  - set -x
+  - 'printf -- "JOB: build"'
   - npm run build
+  - 'printf -- "STAGE: lint"'
+  - set -x
+  - 'printf -- "JOB: lint"'
   - npm run lint
+  - 'printf -- "STAGE: test"'
+  - set -x
+  - 'printf -- "JOB: test"'
   - npm run test
