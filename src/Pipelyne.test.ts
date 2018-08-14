@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import {expect} from 'chai';
 import {Pipelyne} from './Pipelyne';
 
@@ -43,6 +45,43 @@ describe('pipelyne', () => {
         .job('some job');
       expect(pipeline.stages[0].jobs).to.have.length(1);
       expect(pipeline.stages[0].jobs[0].id).to.deep.equal('some-job');
+    });
+  });
+
+  context('.readFile', () => {
+    const testDirectory = './test/tmp/.readFile';
+    const testFilePath =
+      path.join(testDirectory, `./${(new Date()).getTime()}`);
+    const testString = '__abcd';
+
+    before(() => {
+      fs.mkdirSync(testDirectory);
+      fs.writeFileSync(
+        testFilePath,
+        testString,
+      );
+    });
+
+    after(() => {
+      const testFiles = fs.readdirSync(testDirectory);
+      testFiles.forEach((testFile) => {
+        if (testFile.indexOf('.') !== 0) {
+          fs.unlinkSync(
+            path.join(testDirectory, `./${testFile}`)
+          );
+        }
+      });
+      fs.rmdirSync(testDirectory);
+    });
+
+    it('saves the contents of the file to the main pipelyne', () => {
+      const pipeline = new Pipelyne();
+      pipeline
+        .stage('some stage')
+        .job('some job')
+        .readFile(testFilePath, 'testFile')
+        .execute();
+      expect(pipeline.getVariable('testFile')).to.deep.equal(testString);
     });
   });
 

@@ -1,9 +1,11 @@
+import * as fs from 'fs';
 import * as path from 'path';
 import {existsSync} from 'fs';
 import {JobOptions} from './Job';
 import {Stage, StageOptions} from './Stage';
 import {Runnable, RunnableProperties} from './lib/Runnable';
 import {getTravisPipeline} from './exporters/Travis';
+import {Store} from './Store';
 
 export type PipelyneCIProvider = 'travis';
 
@@ -32,13 +34,30 @@ export class Pipelyne extends Runnable<Pipelyne, PipelyneOptions> {
     return this;
   }
 
+  getVariable = Store.get;
+  setVariable = Store.set;
+
   private getCurrentStage(): Stage {
     return this.stages[this.current.stageIndex];
   }
 
-  private verifyStageExists(reason: string): void {
+  private verifyStageExists(
+    reason: string
+  ): void {
     if (!this.stages || this.stages.length < 1) {
       throw new Error(`You need a stage ${reason} (run .stage(...)).`);
+    }
+  }
+
+  private verifyVariableUnassigned(
+    variableName,
+    overwrite = false
+  ): void {
+    if (Store.get(variableName) && !overwrite) {
+      throw new Error(
+        `Variable name "${variableName}" already exists. ` +
+        'Specify an {overwrite: true} option to overwrite the variable.'
+      );
     }
   }
 
@@ -136,6 +155,30 @@ export class Pipelyne extends Runnable<Pipelyne, PipelyneOptions> {
     }
     this.stages = this.stages.concat(...currentPipelyne.stages);
     this.current.stageIndex = this.stages.length - 1;
+    return this;
+  }
+
+  readFile(
+    filePath: string,
+    variableName: string,
+    {
+      overwrite = false
+    }:
+    {
+      overwrite?: boolean;
+    } = {},
+  ): Pipelyne {
+    this.verifyStageExists('to open a file');
+    this.verifyVariableUnassigned(variableName, overwrite);
+    const currentStage = this.getCurrentStage();
+    currentStage.addCommand({
+      command: 'read',
+      params: [
+        path.join(this.baseUri, filePath),
+        variableName,
+      ],
+      type: 'file',
+    });
     return this;
   }
 
