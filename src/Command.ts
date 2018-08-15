@@ -10,10 +10,11 @@ export const statusCode = {
     unstarted: -1,
     typeNotFound: -2,
     fileNotFound: -3,
+    generic: -10000,
   },
 };
 
-export type CommandType = 'run' | 'file';
+export type CommandType = 'run' | 'file' | 'print';
 
 export interface CommandResult {
   code: number;
@@ -22,33 +23,45 @@ export interface CommandResult {
   output?: object | string;
 }
 
-export interface CommandOptions extends RunnableProperties {
+export type PrintParamNonCallable = string | number | boolean;
+export type PrintParamCallable = () => PrintParamNonCallable;
+export type PrintParams = PrintParamCallable | PrintParamNonCallable;
+
+export interface CommandOptions<CT extends CommandType, P>
+  extends RunnableProperties
+{
   command?: string;
   options?: object;
-  params?: string[];
+  params?: P[];
   script?: string;
-  type?: CommandType;
+  type?: CT;
 }
 
-export class Command extends Runnable<Command, CommandOptions> {
+export class Command
+  extends Runnable<Command, CommandOptions<CommandType, any>>
+{
   static count = 0;
 
   code = statusCode.error.unstarted;
   result: CommandResult;
   instance: ChildProcess;
 
+  constructor(opts: CommandOptions<'print', PrintParams>);
+  constructor(opts: CommandOptions<'run', string>);
+  constructor(opts: CommandOptions<'file', string>);
+  constructor(opts: CommandOptions<CommandType, PrintParams | string>);
   constructor({
     allowFailure = false,
     command,
     params,
     script,
     type = 'run',
-  }: CommandOptions = {}) {
+  }: CommandOptions<CommandType, any> = {}) {
     super();
     Command.count += 1;
     this.id = uuid();
     this.options = {
-      ...this[`_generate_${type}_options`]({
+      ...this[`generate_${type}_options`]({
         command,
         params,
         script,
@@ -60,13 +73,35 @@ export class Command extends Runnable<Command, CommandOptions> {
     return this;
   }
 
-  private _generate_file_options(commandOptions: CommandOptions) {
+  /**
+   * Returns an object for inclusion into this.options for file operations
+   */
+  private generate_file_options(
+    commandOptions: CommandOptions<'file', string>
+  ): CommandOptions<'file', string> {
     const {command, params} = commandOptions;
     const script = null;
     return {command, params, script};
   }
 
-  private _generate_run_options(commandOptions: CommandOptions) {
+  /**
+   * Returns an object for inclusion into this.options for print operations
+   */
+  private generate_print_options(
+    commandOptions: CommandOptions<'print', PrintParams>
+  ): CommandOptions<'print', PrintParams> {
+    const {params} = commandOptions;
+    const script = null;
+    return {params, script};
+  }
+
+
+  /**
+   * Returns an object for inclusion into this.options for run operations
+   */
+  private generate_run_options(
+    commandOptions: CommandOptions<'run', string>
+  ): CommandOptions<'run', string> {
     const {script} = commandOptions;
     const parameterisedScript = script.split(' ');
     const params = parameterisedScript.length > 1
@@ -119,6 +154,23 @@ export class Command extends Runnable<Command, CommandOptions> {
     } else {
       return {code: statusCode.error.fileNotFound};
     }
+  }
+
+  print(): Promise<CommandResult> {
+    return new Promise((resolve) => {
+      try {
+        const params = this.options.params.map((param) =>
+          (typeof param === 'function') ? param() : param,
+        );
+        console.info(params.join(' '));
+        resolve({code: statusCode.success});
+      } catch (ex) {
+        resolve({
+          code: statusCode.error.generic,
+          data: ex,
+        });
+      }
+    });
   }
 
   /**

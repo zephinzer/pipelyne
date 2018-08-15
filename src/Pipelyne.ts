@@ -6,6 +6,7 @@ import {Stage, StageOptions} from './Stage';
 import {Runnable, RunnableProperties} from './lib/Runnable';
 import {getTravisPipeline} from './exporters/Travis';
 import {Store} from './Store';
+import {PrintParams, PrintParamCallable} from 'Command';
 
 export type PipelyneCIProvider = 'travis';
 
@@ -34,9 +35,6 @@ export class Pipelyne extends Runnable<Pipelyne, PipelyneOptions> {
     return this;
   }
 
-  getVariable = Store.get;
-  setVariable = Store.set;
-
   private getCurrentStage(): Stage {
     return this.stages[this.current.stageIndex];
   }
@@ -59,6 +57,128 @@ export class Pipelyne extends Runnable<Pipelyne, PipelyneOptions> {
         'Specify an {overwrite: true} option to overwrite the variable.'
       );
     }
+  }
+
+  async execute() {
+    this.state = 'passed';
+    for (let i = 0; i < this.stages.length; ++i) {
+      const {state, status} = await this.stages[i].execute();
+      if (state === 'failed') {
+        this.state = 'failed';
+      }
+      if (!status) {
+        break;
+      }
+    }
+    this.status = (this.state === 'passed' || this.allowFailure);
+    return this;
+  }
+
+  exportFor(ciProviderId: PipelyneCIProvider): string {
+    switch (ciProviderId) {
+      case 'travis':
+        return getTravisPipeline(this);
+      default:
+        throw new Error(`Unknown CI provider "${ciProviderId}".`);
+    }
+  }
+
+  getVariable = Store.get;
+
+  job(name, jobOptions: JobOptions = {}): Pipelyne {
+    this.verifyStageExists('to add a job');
+    const currentStage = this.getCurrentStage();
+    currentStage.addJob({
+      ...jobOptions,
+      name,
+    });
+    return this;
+  }
+
+  load(scriptLocation: string): Pipelyne;
+  load<Pipeline>(pipeline: Pipelyne): Pipelyne;
+  load<Pipeline>(pipelyne: string | Pipeline): Pipelyne {
+    let currentPipelyne;
+    if (pipelyne instanceof Pipelyne) {
+      currentPipelyne = pipelyne;
+    } else if (typeof pipelyne === 'string') {
+      const pipelynePath = path.join(this.baseUri, pipelyne);
+      if (existsSync(pipelynePath)) {
+        currentPipelyne = require(pipelynePath).pipelyne;
+        if (!(currentPipelyne instanceof Pipelyne)) {
+          // tslint:disable-next-line max-line-length
+          throw new ReferenceError(`The specified pipelyne to import at "${pipelynePath}" did not return a defined :pipeline proerty. Did you forget to export it?`);
+        }
+      } else {
+        // tslint:disable-next-line max-line-length
+        throw new TypeError(`The specified file to import a pipelyne from at "${pipelynePath}" could not be found.`);
+      }
+    } else {
+      // tslint:disable-next-line max-line-length
+      throw new TypeError('The :pipelyne property should either be an instance of a Pipelyne, or a relative path string to a file exporting a property :pipeline of type Pipelyne.');
+    }
+    this.stages = this.stages.concat(...currentPipelyne.stages);
+    this.current.stageIndex = this.stages.length - 1;
+    return this;
+  }
+
+  print(...thingsToPrint: PrintParams[]) {
+    this.verifyStageExists('to print something');
+    const currentStage = this.getCurrentStage();
+    currentStage.addCommand({
+      params: [...thingsToPrint],
+      type: 'print',
+    });
+    return this;
+  }
+
+  readFile(
+    filePath: string,
+    variableName: string,
+    {
+      overwrite = false
+    }:
+    {
+      overwrite?: boolean;
+    } = {},
+  ): Pipelyne {
+    this.verifyStageExists('to open a file');
+    this.verifyVariableUnassigned(variableName, overwrite);
+    const currentStage = this.getCurrentStage();
+    currentStage.addCommand({
+      command: 'read',
+      params: [
+        path.join(this.baseUri, filePath),
+        variableName,
+      ],
+      type: 'file',
+    });
+    return this;
+  }
+
+  ref(variableName: string): PrintParamCallable {
+    return () => Store.get(variableName);
+  }
+
+  run(script: string): Pipelyne {
+    this.verifyStageExists('to add a command');
+    const currentStage = this.getCurrentStage();
+    currentStage.addCommand({
+      script,
+      type: 'run',
+    });
+    return this;
+  }
+
+  setVariable = Store.set;
+
+  stage(name, stageOptions: StageOptions = {}): Pipelyne {
+    this.stages.push(new Stage({
+      ...stageOptions,
+      name,
+    }));
+    this.current.stageIndex = this.stages.length - 1;
+    return this;
   }
 
   toString(format?: PipelyneStringFormat) {
@@ -110,109 +230,5 @@ export class Pipelyne extends Runnable<Pipelyne, PipelyneOptions> {
         });
     }
     return formattedString;
-  }
-
-  stage(name, stageOptions: StageOptions = {}): Pipelyne {
-    this.stages.push(new Stage({
-      ...stageOptions,
-      name,
-    }));
-    this.current.stageIndex = this.stages.length - 1;
-    return this;
-  }
-
-  job(name, jobOptions: JobOptions = {}): Pipelyne {
-    this.verifyStageExists('to add a job');
-    const currentStage = this.getCurrentStage();
-    currentStage.addJob({
-      ...jobOptions,
-      name,
-    });
-    return this;
-  }
-
-  load(scriptLocation: string): Pipelyne;
-  load<Pipeline>(pipeline: Pipelyne): Pipelyne;
-  load<Pipeline>(pipelyne: string | Pipeline): Pipelyne {
-    let currentPipelyne;
-    if (pipelyne instanceof Pipelyne) {
-      currentPipelyne = pipelyne;
-    } else if (typeof pipelyne === 'string') {
-      const pipelynePath = path.join(this.baseUri, pipelyne);
-      if (existsSync(pipelynePath)) {
-        currentPipelyne = require(pipelynePath).pipelyne;
-        if (!(currentPipelyne instanceof Pipelyne)) {
-          // tslint:disable-next-line max-line-length
-          throw new ReferenceError(`The specified pipelyne to import at "${pipelynePath}" did not return a defined :pipeline proerty. Did you forget to export it?`);
-        }
-      } else {
-        // tslint:disable-next-line max-line-length
-        throw new TypeError(`The specified file to import a pipelyne from at "${pipelynePath}" could not be found.`);
-      }
-    } else {
-      // tslint:disable-next-line max-line-length
-      throw new TypeError('The :pipelyne property should either be an instance of a Pipelyne, or a relative path string to a file exporting a property :pipeline of type Pipelyne.');
-    }
-    this.stages = this.stages.concat(...currentPipelyne.stages);
-    this.current.stageIndex = this.stages.length - 1;
-    return this;
-  }
-
-  readFile(
-    filePath: string,
-    variableName: string,
-    {
-      overwrite = false
-    }:
-    {
-      overwrite?: boolean;
-    } = {},
-  ): Pipelyne {
-    this.verifyStageExists('to open a file');
-    this.verifyVariableUnassigned(variableName, overwrite);
-    const currentStage = this.getCurrentStage();
-    currentStage.addCommand({
-      command: 'read',
-      params: [
-        path.join(this.baseUri, filePath),
-        variableName,
-      ],
-      type: 'file',
-    });
-    return this;
-  }
-
-  run(script: string): Pipelyne {
-    this.verifyStageExists('to add a command');
-    const currentStage = this.getCurrentStage();
-    currentStage.addCommand({
-      script,
-      type: 'run',
-    });
-    return this;
-  }
-
-  async execute() {
-    this.state = 'passed';
-    for (let i = 0; i < this.stages.length; ++i) {
-      const {state, status} = await this.stages[i].execute();
-      if (state === 'failed') {
-        this.state = 'failed';
-      }
-      if (!status) {
-        break;
-      }
-    }
-    this.status = (this.state === 'passed' || this.allowFailure);
-    return this;
-  }
-
-  exportFor(ciProviderId: PipelyneCIProvider): string {
-    switch (ciProviderId) {
-      case 'travis':
-        return getTravisPipeline(this);
-      default:
-        throw new Error(`Unknown CI provider "${ciProviderId}".`);
-    }
   }
 }

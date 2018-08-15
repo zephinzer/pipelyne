@@ -1,5 +1,5 @@
 import * as Case from 'case';
-import {Command, CommandOptions} from './Command';
+import {Command, CommandOptions, CommandType} from './Command';
 import {Runnable, RunnableProperties} from './lib/Runnable';
 
 export interface CurrentJob {
@@ -33,7 +33,7 @@ export class Job extends Runnable<Job, JobOptions> {
     return this;
   }
 
-  addCommand(commandOptions: CommandOptions): Job {
+  addCommand(commandOptions: CommandOptions<CommandType, any>): Job {
     this.commands.push(new Command(commandOptions));
     this.current.commandIndex = this.commands.length - 1;
     return this;

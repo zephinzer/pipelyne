@@ -1,5 +1,5 @@
 import * as Case from 'case';
-import {CommandOptions} from './Command';
+import {CommandOptions, CommandType} from './Command';
 import {Job, JobOptions} from './Job';
 import {Runnable, RunnableProperties} from './lib/Runnable';
 
@@ -49,7 +49,7 @@ export class Stage extends Runnable<Stage, StageOptions> {
     return this;
   }
 
-  addCommand(commandOptions: CommandOptions): Stage {
+  addCommand(commandOptions: CommandOptions<CommandType, any>): Stage {
     this.verifyJobExists('to add a command');
     const currentJob = this.getCurrentJob();
     currentJob.addCommand(commandOptions);

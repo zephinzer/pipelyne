@@ -22,6 +22,7 @@ A theoretical experiment to enable writing a CI/CD pipeline in good ol' JavaScri
 - [x] Consumer able to load a an externally defined Pipelyne ([see usage](#loading-external-pipelyne))
 - [x] Consumer able to read contents of a file into memory ([see usage](#reading-file-contents-into-memory))
 - [x] Consumer able to export pipeline to Travis format ([see usage](#exporting-pipelyne-for-travis))
+- [x] Consumer able to set and read a variable all during runtime ([see usage](#set-and-read-variable-at-runtime))
 - [ ] Consumer able to do file manipulation
 - [ ] Consumer able to set file ownership permissions
 - [ ] Consumer able to set file modification/execution permissions
@@ -77,13 +78,33 @@ pipeline
 
 ### Reading file contents into memory
 
+> Runs at run-time, not build-time
+
 ```js
 pipeline
   .stage('stage name')
   .job('job name')
   .readFile('./path/to/file', 'testvar');
 
-pipeline.getVariable('testvar'); // file contents
+pipeline.getVariable('testvar'); // undefined
+
+pipeline.execute();
+
+pipeline.getVariable('testvar'); // contents of file
+```
+
+### Set and read variable at runtime
+
+```js
+pipeline
+  .stage('stage name')
+  .job('job name')
+  .readFile('./path/to/file', 'testvar')
+  .print('file contents are:', pipeline.ref('testvar'));
+
+pipeline.getVariable('testvar'); // undefined
+
+pipeline.execute(); // observe "file contents are: ..." output
 ```
 
 ### Loading external Pipelyne via path
@@ -127,6 +148,8 @@ A Pipelyne instance exposes the following methods:
 | `.job` | `:jobName`, `:jobOptions` | Defines a job named `:jobName` under the current stage. See [JobOptions](#joboptions) for possible configurations |
 | `.run` | `:script`, `:commandOptions` | Defines a command that runs a shell script containing the script `:script`. See [CommandOptions](#commandoptions) for possible configurations |
 | `.load` | `:pathToPipelyne` \| `:Pipelyne` | Loads an externally defined Pipelyne. When the parameter is a String, the String is taken as the relative path URI to a file exporting a property `"pipelyne"` which should be a `Pipelyne` instance. When the parameter is a `Pipelyne`, the defined stages are automatically loaded into the current `Pipelyne`. |
+| `.ref` | `:variableName` | Returns a function that `Pipelyne` will call on run to draw from a variable that is set during run-time. |
+| `.print` | `...:thingsToPrint` | Prints the arguments as a string. Arguments are delimited by a space. |
 | `.readFile` | `:filePath`, `:variableName` | Loads the file content of the file at `:filePath` relative to the `baseUri` and stores it in the variable named `:variableName` |
 | `.getVariable` | `:variableName` | Returns the variable with name `:variableName`. Runs at build-time. |
 | `.setVariable` | `:variableName`, `:value` | Sets a variable with name `:variableName` to the value `:value`. Runs at build-time. |
@@ -176,6 +199,7 @@ See [the attached license file](./LICENSE) for details.
 
 | Version | Description |
 | --- | --- |
+| 0.0.6 | Added `.print` to print stuff to the terminal and `.ref` functions to reference run-time variables |
 | 0.0.5 | Added build-time variable support and file content reading |
 | 0.0.4 | Added test resources to `.npmignore` and added stuff to `package.json` |
 | 0.0.3 | Refactored exporter into its own module and enabled setting of `set +x` and `set -x` for allowing/disallowing failure in Travis exports |

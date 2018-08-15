@@ -54,12 +54,12 @@ export class Store {
       overwrite = false,
     }:
     {
-      overwrite: boolean;
-    },
+      overwrite?: boolean;
+    } = {},
   ): void {
     switch (Store.mode) {
       case 'memory':
-        if (!overwrite && typeof Store.variables[name] === 'undefined') {
+        if (!overwrite && typeof Store.variables[name] !== 'undefined') {
           // tslint:disable-next-line max-line-length
           throw new Error(`The variable name "${name}" was already assigned the value ${Store.variables[name]}.`);
         }
