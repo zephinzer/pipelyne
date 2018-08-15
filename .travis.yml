@@ -5,6 +5,10 @@ cache:
   directories:
     - node_modules
 script:
+  - 'printf -- "STAGE: install dependencies"'
+  - set -x
+  - 'printf -- "JOB: install deps"'
+  - 'npm install '
   - 'printf -- "STAGE: build"'
   - set -x
   - 'printf -- "JOB: build"'

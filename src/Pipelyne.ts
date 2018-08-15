@@ -3,6 +3,7 @@ import * as path from 'path';
 import {existsSync} from 'fs';
 import {JobOptions} from './Job';
 import {Stage, StageOptions} from './Stage';
+import {NPM} from './plugins/NPM';
 import {Runnable, RunnableProperties} from './lib/Runnable';
 import {getTravisPipeline} from './exporters/Travis';
 import {Store} from './Store';
@@ -25,6 +26,7 @@ export class Pipelyne extends Runnable<Pipelyne, PipelyneOptions> {
   current: Current = {
     stageIndex: -1,
   };
+  npm: NPM;
   stages: Stage[] = [];
 
   constructor({
@@ -32,6 +34,7 @@ export class Pipelyne extends Runnable<Pipelyne, PipelyneOptions> {
   }: PipelyneOptions = {}) {
     super();
     this.baseUri = path.join(process.cwd(), baseUri);
+    this.npm = new NPM(this);
     return this;
   }
 

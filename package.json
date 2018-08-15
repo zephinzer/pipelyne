@@ -1,6 +1,6 @@
 {
   "name": "pipelyne",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "A theoretical experiment to enable writing a CI/CD pipeline in good ol' JavaScript.",
   "main": "dist/Pipelyne.js",
   "scripts": {

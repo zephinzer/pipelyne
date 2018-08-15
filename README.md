@@ -15,19 +15,32 @@ A theoretical experiment to enable writing a CI/CD pipeline in good ol' JavaScri
 
 ## Scope
 
+### Base
 - [x] Consumer able to define pipeline stages via `.stage()` ([see usage](#defining-a-stage))
 - [x] Consumer able to define pipeline jobs within a stage via `.job()` ([see usage](#defining-a-job))
-- [x] Consumer able to add manually input bash scripts via `.run()` ([see usage](#defining-a-shell-command))
 - [x] Consumer able to load a Pipelyne by specifying a file path URI ([see usage](#loading-external-pipelyne-via-path))
 - [x] Consumer able to load a an externally defined Pipelyne ([see usage](#loading-external-pipelyne))
-- [x] Consumer able to read contents of a file into memory ([see usage](#reading-file-contents-into-memory))
-- [x] Consumer able to export pipeline to Travis format ([see usage](#exporting-pipelyne-for-travis))
+- [x] Consumer able to add manually input bash scripts via `.run()` ([see usage](#defining-a-shell-command))
+
+### Variable Management
 - [x] Consumer able to set and read a variable all during runtime ([see usage](#set-and-read-variable-at-runtime))
+
+### File Operations
+- [x] Consumer able to read contents of a file into memory ([see usage](#reading-file-contents-into-memory))
+
+### NPM Convenience Methods
+- [x] Consumer able to install NPM dependencies ([see usage](#installing-npm-dependencies))
+- [x] Consumer able to publish to NPM ([see usage](#publishing-to-npm))
+- [x] Consumer able to run an NPM script ([see usage](#running-an-npm-script))
+
+### Exporting from Pipelyne
+- [x] Consumer able to export pipeline to Travis format ([see usage](#exporting-pipelyne-for-travis))
+
+### Future
 - [ ] Consumer able to do file manipulation
 - [ ] Consumer able to set file ownership permissions
 - [ ] Consumer able to set file modification/execution permissions
 - [ ] Consumer able to run NPM scripts from `package.json`
-- [ ] Consumer able to publish to NPM
 - [ ] Consumer able to publish to DockerHub
 - [ ] Consumer able to do a Git push to repository
 - [ ] Consumer able to export pipeline to GitLab format
@@ -123,6 +136,39 @@ pipeline.load(require('./path/to/pipelyne.js').pipelyne);
 
 > **NOTE**: The loaded pipelyne should be an instance of Pipelyne.
 
+### Installing NPM Dependencies
+
+```js
+pipeline
+  .stage('stage')
+  .job('job')
+  // doing a development dependencies install
+  .npm.install()
+  // doing a production dependencies install
+  .npm.install({production: true});
+```
+
+### Publishing to NPM
+
+```js
+pipeline
+  .stage('stage')
+  .job('job')
+  .npm.publish();
+```
+
+### Running an NPM Script
+
+```js
+pipeline
+  .stage('stage')
+  .job('job')
+  // npm run build
+  .npm.run('build')
+  // npm run test -- --watch
+  .npm.run('test', {args: '--watch'});
+```
+
 ### Exporting Pipelyne for Travis
 
 ```js
@@ -148,6 +194,9 @@ A Pipelyne instance exposes the following methods:
 | `.job` | `:jobName`, `:jobOptions` | Defines a job named `:jobName` under the current stage. See [JobOptions](#joboptions) for possible configurations |
 | `.run` | `:script`, `:commandOptions` | Defines a command that runs a shell script containing the script `:script`. See [CommandOptions](#commandoptions) for possible configurations |
 | `.load` | `:pathToPipelyne` \| `:Pipelyne` | Loads an externally defined Pipelyne. When the parameter is a String, the String is taken as the relative path URI to a file exporting a property `"pipelyne"` which should be a `Pipelyne` instance. When the parameter is a `Pipelyne`, the defined stages are automatically loaded into the current `Pipelyne`. |
+| `.npm.publish` | - | Publishes the current NPM package. |
+| `.npm.install` | `{:production}` | Installs the NPM dependencies |
+| `.npm.run` | `:command`, `{:args}` | Runs the specified NPM command `:command`. If arguments are needed, use the `:arg` property in the options object. |
 | `.ref` | `:variableName` | Returns a function that `Pipelyne` will call on run to draw from a variable that is set during run-time. |
 | `.print` | `...:thingsToPrint` | Prints the arguments as a string. Arguments are delimited by a space. |
 | `.readFile` | `:filePath`, `:variableName` | Loads the file content of the file at `:filePath` relative to the `baseUri` and stores it in the variable named `:variableName` |
@@ -199,6 +248,7 @@ See [the attached license file](./LICENSE) for details.
 
 | Version | Description |
 | --- | --- |
+| 0.0.7 | Added `.npm` convenience methods with `.publish()`, `.install()` and `.run(:scriptNameFromPackageJson)` |
 | 0.0.6 | Added `.print` to print stuff to the terminal and `.ref` functions to reference run-time variables |
 | 0.0.5 | Added build-time variable support and file content reading |
 | 0.0.4 | Added test resources to `.npmignore` and added stuff to `package.json` |

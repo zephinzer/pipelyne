@@ -5,15 +5,18 @@ const {Pipelyne} = require('./dist/Pipelyne');
 const pipelyne = new Pipelyne();
 
 pipelyne
+  .stage('install dependencies')
+  .job('install deps')
+  .npm.install()
   .stage('build')
   .job('build')
-  .run('npm run build')
+  .npm.run('build')
   .stage('lint')
   .job('lint')
-  .run('npm run lint')
+  .npm.run('lint')
   .stage('test')
   .job('test')
-  .run('npm run test')
+  .npm.run('test')
   .execute()
 ;
 

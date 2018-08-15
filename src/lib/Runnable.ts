@@ -1,4 +1,4 @@
-import {State} from "types";
+import {State} from '../types';
 
 export interface RunnableProperties {
   allowFailure?: boolean;
